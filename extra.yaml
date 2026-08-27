@@ -1,0 +1,90 @@
+# Estos manifiestos no es necesario impactar
+# Son creados al habilitar la observabilidad en Kuadrant a excepción del istiod
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istiod
+  namespace: openshift-ingress
+spec:
+  endpoints:
+  - port: http-monitoring
+  namespaceSelector:
+    matchNames:
+    - openshift-ingress
+  selector:
+    matchLabels:
+      app: istiod
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: authorino-operator-metrics
+  namespace: openshift-operators
+spec:
+  endpoints:
+  - path: /metrics
+    port: metrics
+    scheme: http
+  selector:
+    matchLabels:
+      control-plane: authorino-operator
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/created-by: dns-operator
+    app.kubernetes.io/instance: controller-manager-metrics-monitor
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: servicemonitor
+    app.kubernetes.io/part-of: dns-operator
+    control-plane: controller-manager
+  name: dns-operator-metrics-monitor
+  namespace: openshift-operators
+spec:
+  endpoints:
+  - path: /metrics
+    port: metrics
+    scheme: http
+  selector:
+    matchLabels:
+      control-plane: dns-operator-controller-manager
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: kuadrant-operator-metrics
+  namespace: openshift-operators
+spec:
+  endpoints:
+  - path: /metrics
+    port: metrics
+    scheme: http
+  selector:
+    matchLabels:
+      app: kuadrant
+      control-plane: controller-manager
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: limitador-operator-metrics
+  namespace: openshift-operators
+spec:
+  endpoints:
+  - path: /metrics
+    port: metrics
+    scheme: http
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+---
+      
