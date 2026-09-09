@@ -12,6 +12,7 @@ que propone este comando, el cual falla
 
 oc apply -k https://github.com/Kuadrant/kuadrant-operator/config/install/configure/observability?ref=v1.2.0
 
+
 Listado de Metricas en:
 https://github.com/Kuadrant/gateway-api-state-metrics/blob/main/METRICS.md
 
@@ -20,6 +21,15 @@ Se quita creacion de namespace monitoring
 Se reemplaza ns monitoring por kudrant-system
 
 Se trasladan manifiestos de otros ns a archivo extras.yaml para facilitar control de lo impactado.
+
+Para que los Dashboard funcionen correctamente sobre los manifiestos HTTPRoutes se deben incluir:
+  labels:
+    - service: myapp
+    - deployment: myapp
+
+El valor myapp debe coincidir con el nombre del svc o deployment hacia el cual se dirige el tráfico (es decir el backend).
+
+
 
 Se elimina manifiesto por impacto en Prometheus, pendiente analisis y mejora
 apiVersion: telemetry.istio.io/v1alpha1
