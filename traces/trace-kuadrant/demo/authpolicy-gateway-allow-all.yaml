@@ -1,0 +1,20 @@
+# AuthPolicy mínima para que Kuadrant inyecte wasm-shim y genere trazas de auth.
+# Sin una policy Accepted en el Gateway, no se crean EnvoyFilters kuadrant-*.
+apiVersion: kuadrant.io/v1
+kind: AuthPolicy
+metadata:
+  name: gateway-allow-all
+  namespace: connlink
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: gw-two
+  rules:
+    authorization:
+      allow-all:
+        priority: 0
+        metrics: false
+        opa:
+          allValues: false
+          rego: allow = true

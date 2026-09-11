@@ -1,0 +1,15 @@
+apiVersion: kuadrant.io/v1beta1
+kind: Kuadrant
+metadata:
+  name: kuadrant
+  namespace: kuadrant-system
+spec:
+  observability:
+    enable: true
+    dataPlane:
+      defaultLevels:
+        - debug: "true"
+      httpHeaderIdentifier: x-request-id
+    tracing:
+      defaultEndpoint: rpc://otel-collector-collector.openshift-tempo-operator.svc.cluster.local:4317
+      insecure: true
