@@ -272,28 +272,28 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'5..'}[1m]))",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'5..'}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "5XX",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'4..'}[1m]))",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'4..'}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "4XX",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'3..'}[1m]))",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'3..'}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "3XX",
           "refId": "C"
         },
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'2..'}[1m]))",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'2..'}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "2XX",
@@ -389,28 +389,28 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'5..'}[1m])) by (pod)",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'5..'}[1m])) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}: 5XX",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'4..'}[1m])) by (pod)",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'4..'}[1m])) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}: 4XX",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'3..'}[1m])) by (pod)",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'3..'}[1m])) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}: 3XX",
           "refId": "C"
         },
         {
-          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'2..'}[1m])) by (pod)",
+          "expr": "sum(rate(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'2..'}[1m])) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}: 2XX",
@@ -618,7 +618,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'5..'}[1m])) by (pod)",
+          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'5..'}[1m])) by (pod)",
           "format": "time_series",
           "interval": "1m",
           "intervalFactor": 1,
@@ -736,7 +736,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'5..'}[1h]))",
+          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'5..'}[1h]))",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -825,7 +825,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'5..'}[6h]))",
+          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'5..'}[6h]))",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -893,7 +893,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "pluginVersion": "6.2.4",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -914,7 +913,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'5..'}[12h]))",
+          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'5..'}[12h]))",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -1003,7 +1002,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', response_code=~'5..'}[24h]))",
+          "expr": "sum(increase(istio_requests_total{namespace=~'$namespace', pod=~'$pod', reporter=\"source\", response_code=~'5..'}[24h]))",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -2744,5 +2743,5 @@
   "timezone": "",
   "title": "Gateway / Custom Pod Metrics",
   "uid": "gateway-custom-pod-metrics",
-  "version": 1
+  "version": 2
 }

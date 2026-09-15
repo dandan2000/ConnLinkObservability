@@ -1,7 +1,9 @@
-### OCP > 4.20
-### Probado en Experience OpenShift Virtualization Roadshow (2026)
-## MAGIA NICO
----
+## Script probado en Red Hat OpenShift Container Platform Cluster
+#!/bin/bash
+set -e
+
+echo "=== 1. Aplicando manifiestos base de Kubernetes / OpenShift ==="
+cat << 'YAML' | oc apply -f -
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -36,13 +38,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: echo-api
+  name: echoserver
   namespace: connlink
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: echo-api
+      app: echoserver
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -51,10 +53,10 @@ spec:
   template:
     metadata:
       labels:
-        app: echo-api
+        app: echoserver
     spec:
       containers:
-        - name: echo-api
+        - name: echoserver
           image: quay.io/3scale/echoapi:stable
           livenessProbe:
             tcpSocket:
@@ -74,7 +76,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: echo-api
+  name: echoserver
   namespace: connlink
 spec:
   ports:
@@ -83,7 +85,7 @@ spec:
     protocol: TCP
     targetPort: 9292
   selector:
-    app: echo-api
+    app: echoserver
   type: ClusterIP
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -91,8 +93,8 @@ kind: HTTPRoute
 metadata:
   name: echoserver
   namespace: connlink
-  labels:
-   server: echo-api ## tiene que llamarse igual al service
+  labels: 
+    service: echoserver ## tiene que llamarse igual al service
 spec:
   hostnames:
     - echoserver.example.com
@@ -105,7 +107,7 @@ spec:
     - backendRefs:
         - group: ''
           kind: Service
-          name: echo-api
+          name: echoserver
           port: 80
           weight: 1
       filters: []
@@ -185,6 +187,32 @@ spec:
   source: community-operators
   sourceNamespace: openshift-marketplace
 ---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: servicemeshoperator3
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: servicemeshoperator3
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: servicemeshoperator3.v3.4.1
+YAML
+
+
+# 2. Esperar a que el operador registre los CRDs en la API
+echo "=== Esperando a que Grafana Operator registre sus CRDs ==="
+until oc get crd grafanas.grafana.integreatly.org &>/dev/null; do
+  echo "Esperando a que OLM cree los CRDs de Grafana..."
+  sleep 5
+done
+
+oc wait --for=condition=Established crd/grafanas.grafana.integreatly.org --timeout=120s
+oc wait --for=condition=Established crd/grafanadashboards.grafana.integreatly.org --timeout=120s
+
+cat << 'YAML' | oc apply -f -
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
@@ -1246,7 +1274,7 @@ spec:
         - --telemetry-port=8082
         - --custom-resource-state-config-file
         - /custom-resource-state/custom-resource-state.yaml
-        image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.9.2
+        image: registry.redhat.io/openshift4/ose-kube-state-metrics-rhel9:latest
         name: kube-state-metrics
         ports:
         - containerPort: 8081
@@ -1419,19 +1447,23 @@ spec:
   podMetricsEndpoints:
   - port: http-envoy-prom
     path: /stats/prometheus
+YAML
 
----
-## MAGIA MIA 
+# Asegurar el directorio de trabajo
+mkdir -p /tmp/instalacion 2>/dev/null || true
+cd /tmp/instalacion 2>/dev/null || true
+
 cat <<EOF > kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - https://github.com/Kuadrant/kuadrant-operator/examples/dashboards?ref=v1.4.1
-namespace: default
+namespace: connlink
 EOF
 
 oc apply -k .
----
+
+cat << 'YAML' | oc apply -f -
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -1504,7 +1536,7 @@ spec:
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
-metadata:
+metadata:            - '--custom-resource-state-only=true'
   name: grafana-platform-engineer
   namespace: connlink
 spec:
@@ -1515,39 +1547,23 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana-cl
----
-## Expongo las metricas de envoy a la mesh y arreglo tema de OOMKilled
+YAML
+
+echo "=== Esperando creación del Deployment del Gateway por el Operador ==="
+until oc get deployment/gw-one-openshift-default -n connlink &>/dev/null; do
+  echo "Esperando a deployment/gw-one-openshift-default..."
+  sleep 5
+done
+
 oc patch deployment/gw-one-openshift-default -n connlink --type=json -p '[{"op": "remove", "path": "/spec/template/spec/containers/0/resources/limits"}]'
 oc patch deployment/gw-one-openshift-default -n connlink --type=merge -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/statsInclusionRegexps":".*upstream_rq_time.*|.*downstream_cx_active.*"}}}}}'
+oc rollout restart deployment/gw-one-openshift-default -n connlink
+
+## Este patch hace que no se dupliquen las metricas pero deja de funcionar el segundo dashboard de CL oficial
 oc patch deployment kube-state-metrics-kuadrant -n connlink --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--custom-resource-state-only=true"}]'
 oc rollout restart deployment/kube-state-metrics-kuadrant -n connlink
-oc rollout restart deployment/gw-one-openshift-default -n connlink
+
+echo "=== Esperando a que el pod complete su reinicio y esté en Running ==="
+oc rollout status deployment/gw-one-openshift-default -n connlink --timeout=120s
+
 oc exec -n connlink deployment/gw-one-openshift-default -c istio-proxy -- pilot-agent request GET /stats/prometheus | grep "upstream_rq_time"
----
-
-## Script pruebas
-
-oc port-forward svc/gw-one-openshift-default 8080:80
-
-#!/bin/bash
-
-ENDPOINT="http://localhost:8080"
-HOST="Host: echoserver.example.com"
-
-echo "Generando tráfico simulado en $ENDPOINT con header $HOST..."
-
-while true; do
-  # 1. 200 OK (Ruta válida)
-  curl -s -o /dev/null -w "200 -> %{http_code}\n" -H "$HOST" "$ENDPOINT/"
-
-  # 2. 404 Not Found (Ruta inexistente)
-  curl -s -o /dev/null -w "404 -> %{http_code}\n" -H "$HOST" "$ENDPOINT/not-found-$(date +%s)"
-
-  # 3. 500 Internal Server Error (Endpoint de error simulado)
-  curl -s -o /dev/null -w "500 -> %{http_code}\n" -H "$HOST" "$ENDPOINT/status/500"
-
-  # 4. 400 Bad Request (Parámetros malformados)
-  curl -s -o /dev/null -w "400 -> %{http_code}\n" -H "$HOST" "$ENDPOINT/?q=%invalid"
-
-  sleep 0.2
-done
