@@ -1,0 +1,40 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: bff-service
+  namespace: connlink
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fake-service
+  template:
+    metadata:
+      labels:
+        app: fake-service
+    spec:
+      containers:
+        - name: container
+          image: 'nicholasjackson/fake-service:v0.26.2'
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          env:
+            - name: NAME
+              value: bff-gateway
+            # In-cluster: comparte traceparent W3C con echo-api (no re-entrar por gateway).
+            - name: UPSTREAM_URIS
+              value: 'http://echo-api.connlink.svc.cluster.local:80'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bff-service
+  namespace: connlink
+spec:
+  selector:
+    app: fake-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9090

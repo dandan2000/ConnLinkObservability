@@ -1,0 +1,29 @@
+# SCC requerido por el sidecar eBPF de Go auto-instrumentation (doc Red Hat build of OpenTelemetry).
+# Asociar al SA del workload: apply-instrumentation.sh
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: otel-go-instrumentation-scc
+allowHostDirVolumePlugin: true
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: true
+allowedCapabilities:
+  - SYS_PTRACE
+fsGroup:
+  type: RunAsAny
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+seccompProfiles:
+  - "*"
+supplementalGroups:
+  type: RunAsAny
+volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - persistentVolumeClaim
+  - projected
+  - secret
+  - hostPath

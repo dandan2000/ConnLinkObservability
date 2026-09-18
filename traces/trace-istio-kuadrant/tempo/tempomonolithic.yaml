@@ -1,0 +1,18 @@
+# TempoMonolithic con multitenancy OpenShift (requerido por UIPlugin distributed-tracing).
+# El tenantId (UUID) lo asigna el operador en modo openshift; solo definir tenantName.
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoMonolithic
+metadata:
+  name: multitenant
+  namespace: openshift-tempo-operator
+spec:
+  multitenancy:
+    authentication:
+      - tenantName: dev
+    enabled: true
+    mode: openshift
+  storage:
+    traces:
+      backend: memory
+      size: 2Gi
+  timeout: 0s

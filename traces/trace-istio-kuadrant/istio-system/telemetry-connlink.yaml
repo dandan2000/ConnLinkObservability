@@ -1,0 +1,12 @@
+# Activa tracing Istio (Envoy gateway) en el namespace de la app.
+# El provider otel-collector debe existir en meshConfig (istio.yaml).
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: connlink
+spec:
+  tracing:
+    - providers:
+        - name: otel-collector
+      randomSamplingPercentage: 100

@@ -1,0 +1,10 @@
+# respetar el nombre default
+# al no definir version, el operador define la recomendada compatible
+apiVersion: sailoperator.io/v1
+kind: IstioCNI
+metadata:
+  name: default
+spec:
+  namespace: istio-cni
+  updateStrategy:
+    type: InPlace

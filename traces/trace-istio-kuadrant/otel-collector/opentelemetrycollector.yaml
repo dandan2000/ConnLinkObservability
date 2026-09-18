@@ -1,0 +1,81 @@
+# Collector compartido por Kuadrant (wasm-shim) e Istio (Envoy).
+# Incluye transform para renombrar spans de wasm-shim y gRPC de Authorino.
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: openshift-tempo-operator
+spec:
+  mode: deployment
+  serviceAccount: otel-collector
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      k8sattributes:
+        auth_type: serviceAccount
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.deployment.name
+            - k8s.node.name
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.ip
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+          - sources:
+              - from: connection
+      resourcedetection:
+        detectors: [env]
+        timeout: 2s
+      transform/traces:
+        error_mode: ignore
+        trace_statements:
+          - context: resource
+            statements:
+              - set(attributes["service.name"], Concat(["gateway/", attributes["k8s.deployment.name"]], ""))
+                where attributes["service.name"] == "wasm-shim" and attributes["k8s.deployment.name"] != nil
+          - context: span
+            statements:
+              - set(name, attributes["action"]) where name == "grpc" and attributes["action"] != nil
+              - set(name, attributes["grpc_method"]) where name == "grpc_request" and attributes["grpc_method"] != nil
+              - set(name, Concat([attributes["grpc_method"], " (response)"], ""))
+                where name == "grpc_response" and attributes["grpc_method"] != nil
+              - set(name, Concat(["headers:", attributes["target"]], ""))
+                where name == "headers" and attributes["target"] != nil
+              - set(name, Concat(["send_reply:", String(attributes["status_code"])], ""))
+                where name == "send_reply" and attributes["status_code"] != nil
+          - context: span
+            statements:
+              - replace_pattern(name, "^envoy\\.service\\.auth\\.v3\\.Authorization/", "auth/")
+                where IsMatch(name, "^envoy\\.service\\.auth\\.v3\\.Authorization/")
+      batch: {}
+    exporters:
+      otlp/tempo:
+        endpoint: tempo-multitenant-gateway.openshift-tempo-operator.svc.cluster.local:4317
+        auth:
+          authenticator: bearertokenauth
+        headers:
+          X-Scope-OrgID: dev
+        tls:
+          insecure: false
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+    extensions:
+      bearertokenauth:
+        filename: /var/run/secrets/kubernetes.io/serviceaccount/token
+    service:
+      extensions: [bearertokenauth]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [k8sattributes, resourcedetection, transform/traces, batch]
+          exporters: [otlp/tempo]

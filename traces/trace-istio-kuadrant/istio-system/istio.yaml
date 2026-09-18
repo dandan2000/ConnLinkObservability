@@ -1,0 +1,18 @@
+# Istio mesh con exportación OTLP al mismo collector que Kuadrant.
+# Requiere OpenShift Service Mesh 3 (servicemeshoperator3) + IstioCNI.
+apiVersion: sailoperator.io/v1
+kind: Istio
+metadata:
+  name: default
+spec:
+  namespace: istio-system
+  updateStrategy:
+    type: InPlace
+  values:
+    meshConfig:
+      enableTracing: true
+      extensionProviders:
+        - name: otel-collector
+          opentelemetry:
+            port: 4317
+            service: otel-collector-collector.openshift-tempo-operator.svc.cluster.local

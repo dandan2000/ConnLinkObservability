@@ -1,0 +1,22 @@
+# Instrumentation para workloads Go (fake-service) en connlink.
+# Kuadrant sigue exportando por gRPC :4317; el sidecar Go usa HTTP OTLP :4318.
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: connlink-instrumentation
+  namespace: connlink
+spec:
+  exporter:
+    endpoint: http://otel-collector-collector.openshift-tempo-operator.svc.cluster.local:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  go:
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector-collector.openshift-tempo-operator.svc.cluster.local:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
