@@ -4,8 +4,9 @@ set -euo pipefail
 HOST="${HOST:-api.apps.sno.home}"
 REQ_ID="${REQ_ID:-test-$(date +%s)}"
 PORT="${PORT:-8080}"
+GW_SVC="${GW_SVC:-gw-two-openshift-default}"
 
-echo "==> Port-forward: connlink/gw-two-openshift-default ${PORT}:80"
+echo "==> Port-forward: connlink/${GW_SVC} ${PORT}:80"
 echo "    (ejecutar en otra terminal si no hay port-forward activo)"
 echo
 echo "==> curl con x-request-id=${REQ_ID}"
