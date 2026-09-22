@@ -1,0 +1,33 @@
+apiVersion: kuadrant.io/v1
+kind: AuthPolicy
+metadata:
+  name: greeting-echo-auth
+  namespace: connlink
+spec:
+  rules:
+    authentication:
+      api-key-authn-54a5ff6d:
+        apiKey:
+          allNamespaces: true
+          selector:
+            matchLabels:
+              application_id: 7d7597ba
+              key-type: app-key
+        credentials:
+          customHeader:
+            name: app_key
+        metrics: false
+        priority: 0
+    authorization:
+      require-app-id:
+        metrics: false
+        patternMatching:
+          patterns:
+            - operator: eq
+              selector: request.headers.app_id
+              value: 7d7597ba
+        priority: 0
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: fake-api
